@@ -1,0 +1,7 @@
+gradio>=5.0,<7
+transformers>=4.56,<6
+huggingface_hub>=0.34
+torch>=2.2
+Pillow>=10
+numpy>=1.26,<3
+faiss-cpu>=1.8

@@ -1,0 +1,14 @@
+{
+  "source": "C:\\Users\\amina\\Pictures\\zara_100_bags",
+  "output": "C:\\Users\\amina\\Pictures\\zara_retrieval_dataset",
+  "seed": 42,
+  "source_product_folders": 100,
+  "included_products": 100,
+  "skipped_products": 0,
+  "query_images": 100,
+  "gallery_images": 357,
+  "total_copied_images": 457,
+  "ignored_images": 0,
+  "original_bytes_preserved": true,
+  "note": "No resize or recompression. Near-duplicates (different bytes but visually similar) are not detected."
+}
