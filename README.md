@@ -2,7 +2,7 @@
 
 **Image-to-image and text-to-image retrieval powered by DINOv2, DINOv3, and SigLIP2.**
 
-A computer vision project for searching a fashion catalog of **100 bags and 357 gallery images**. It uses pretrained vision and vision-language encoders to generate embeddings, **FAISS** for nearest-neighbor search, and a **Gradio** interface to display the **top 3 most similar distinct products**. No task-specific fine-tuning is required.
+A computer vision project for searching a fashion catalog of 100 bags and 357 gallery images. It uses pretrained vision and vision-language encoders to generate embeddings, FAISS for nearest-neighbor search, and a Gradio interface to display the top 3 most similar distinct products. No task-specific fine-tuning is required.
 
 ## Retrieval Demos
 
@@ -18,20 +18,12 @@ Choose a saved catalog image by product ID or **upload your own bag photo**. Sel
 
 Describe the bag in natural language, for example: **“Colorful striped crochet tote bag with leather straps.”** **SigLIP2** embeds the text and searches for the closest catalog images in its shared text-image embedding space. Text search uses SigLIP2 regardless of the vision model selected for image search.
 
-## Vision Models
-
-| Model | Role in retrieval |
-| --- | --- |
-| **DINOv2 Small** (`facebook/dinov2-small`) | Self-supervised visual features from the ViT `[CLS]` token; image-to-image search. |
-| **DINOv3 Small** (`facebook/dinov3-vits16-pretrain-lvd1689m`) | Self-supervised ViT `[CLS]` features; image-to-image search. |
-| **SigLIP2 Base** (`google/siglip2-base-patch16-224`) | Aligned image and text embeddings; both image-to-image and text-to-image search. |
-
 ## How It Works
 
 1. **Offline indexing:** `build_artifacts.py` extracts gallery and saved-query embeddings for each model, L2-normalizes them, and builds a separate **FAISS `IndexFlatIP`** index for each encoder.
 2. **Query encoding:** A saved image uses its precomputed embedding; an uploaded image uses the chosen vision encoder; a text prompt uses SigLIP2's text encoder.
-3. **Similarity search:** FAISS ranks normalized embeddings by inner product (**cosine similarity**). Results are deduplicated by product ID.
-4. **Results:** Gradio shows the **top 3 distinct products**, representative images, product IDs, and similarity scores.
+3. **Similarity search:** FAISS ranks normalized embeddings by inner product (cosine similarity). Results are deduplicated by product ID.
+4. **Results:** Gradio shows the top 3 distinct products, representative images, product IDs, and similarity scores.
 
 > Similarity scores are retrieval scores, not classification probabilities; text and image query scores should not be interpreted as directly comparable confidence levels.
 
@@ -46,7 +38,3 @@ python app.py
 ```
 
 Open **http://127.0.0.1:7860** and try a saved image, an upload, or a text description.
-
-> **DINOv3:** Its Hugging Face checkpoint may require access approval and `hf auth login`. To build only the other two indexes, run `python build_artifacts.py --models dinov2 siglip2` instead.
-
-**Tech stack:** Python · PyTorch · Hugging Face Transformers · DINOv2 · DINOv3 · SigLIP2 · FAISS · Gradio
