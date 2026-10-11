@@ -1,78 +1,52 @@
 # Zara Bag Retrieval
 
-Visual product retrieval with DINOv2, DINOv3, SigLIP2, FAISS and Gradio.
+**Image-to-image and text-to-image retrieval powered by DINOv2, DINOv3, and SigLIP2.**
 
-## Setup
+A computer vision project for searching a fashion catalog of **100 bags and 357 gallery images**. It uses pretrained vision and vision-language encoders to generate embeddings, **FAISS** for nearest-neighbor search, and a **Gradio** interface to display the **top 3 most similar distinct products**. No task-specific fine-tuning is required.
 
-Requires Python 3.10+.
+## Retrieval Demos
+
+### 1. Image-to-Image Search
+
+![Image-to-image retrieval: a selected red bag and its top three visual matches](assets/image-to-image-demo.png)
+
+Choose a saved catalog image by product ID or **upload your own bag photo**. Select **DINOv2, DINOv3, or SigLIP2** to retrieve visually similar bags, ranked by cosine similarity. Saved queries use cached embeddings; uploaded images are encoded on demand.
+
+### 2. Text-to-Image Search
+
+![Text-to-image retrieval: a description of a colorful crochet tote and the top three matching bags](assets/text-to-image-demo.png)
+
+Describe the bag in natural language, for example: **“Colorful striped crochet tote bag with leather straps.”** **SigLIP2** embeds the text and searches for the closest catalog images in its shared text-image embedding space. Text search uses SigLIP2 regardless of the vision model selected for image search.
+
+## Vision Models
+
+| Model | Role in retrieval |
+| --- | --- |
+| **DINOv2 Small** (`facebook/dinov2-small`) | Self-supervised visual features from the ViT `[CLS]` token; image-to-image search. |
+| **DINOv3 Small** (`facebook/dinov3-vits16-pretrain-lvd1689m`) | Self-supervised ViT `[CLS]` features; image-to-image search. |
+| **SigLIP2 Base** (`google/siglip2-base-patch16-224`) | Aligned image and text embeddings; both image-to-image and text-to-image search. |
+
+## How It Works
+
+1. **Offline indexing:** `build_artifacts.py` extracts gallery and saved-query embeddings for each model, L2-normalizes them, and builds a separate **FAISS `IndexFlatIP`** index for each encoder.
+2. **Query encoding:** A saved image uses its precomputed embedding; an uploaded image uses the chosen vision encoder; a text prompt uses SigLIP2's text encoder.
+3. **Similarity search:** FAISS ranks normalized embeddings by inner product (**cosine similarity**). Results are deduplicated by product ID.
+4. **Results:** Gradio shows the **top 3 distinct products**, representative images, product IDs, and similarity scores.
+
+> Similarity scores are retrieval scores, not classification probabilities; text and image query scores should not be interpreted as directly comparable confidence levels.
+
+## Quick Start
+
+**Requirements:** Python 3.10+ and the dataset arranged as `data/query/<product ID>/<image>.jpg` and `data/gallery/<product ID>/<image>.jpg`.
 
 ```bash
 python -m pip install -r requirements.txt
-```
-
-Place the original product images inside `data/query/` and `data/gallery/`. Each product must use the same directory name in both locations.
-
-```text
-Zara_Bag_Retrieval/
-├── app.py
-├── build_artifacts.py
-├── requirements.txt
-├── data/
-│   ├── query/
-│   │   ├── img 001/
-│   │   └── ...
-│   └── gallery/
-│       ├── img 001/
-│       └── ...
-├── artifacts/           (generated locally; not tracked by Git)
-├── zara_bag_retrieval/
-└── tests/
-```
-
-If you have existing model artifacts, copy the `dinov2`, `dinov3` and `siglip2` directories into `artifacts/`. The app validates that the image inventory matches the current dataset.
-
-Otherwise, build the indexes once:
-
-```bash
 python build_artifacts.py --batch-size 2
-```
-
-DINOv3 requires access to its gated Hugging Face repository (`hf auth login`). If access is unavailable, build the other models with `--models dinov2 siglip2`.
-
-Start the application from the project directory:
-
-```bash
 python app.py
 ```
 
-Open http://127.0.0.1:7860.
+Open **http://127.0.0.1:7860** and try a saved image, an upload, or a text description.
 
-## Search
+> **DINOv3:** Its Hugging Face checkpoint may require access approval and `hf auth login`. To build only the other two indexes, run `python build_artifacts.py --models dinov2 siglip2` instead.
 
-- Select one of the saved query images, or upload a new image.
-- Choose DINOv2, DINOv3 or SigLIP2.
-- View the top three **different products**, with one representative image and similarity score per product.
-- Saved queries reuse cached embeddings. Uploaded images are encoded on demand.
-
-Original image files are not resized or rewritten by the application. Model preprocessing takes place in memory.
-
-## Tests
-
-```bash
-python -m pip install -r requirements-dev.txt
-python -m pytest -q
-```
-
-## Repository data
-
-The `data/` directory is intended for the project images. Check redistribution rights for Zara photography before publishing it. GitHub rejects individual files larger than 100 MB; use Git LFS when appropriate.
-
-Generated indexes, embeddings and model weights are local runtime files and are excluded from Git. No search history or result files are saved by the web interface.
-
-
-## Features
-
-- Search by saved query image
-- Search by uploaded image
-- Search by text with SigLIP2
-- Return top 3 distinct products
+**Tech stack:** Python · PyTorch · Hugging Face Transformers · DINOv2 · DINOv3 · SigLIP2 · FAISS · Gradio
