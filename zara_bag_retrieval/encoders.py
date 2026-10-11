@@ -79,3 +79,42 @@ class EncoderPool:
         if image is None:
             raise ValueError("Please upload an image")
         return self.images_embeddings(key, [image])[0]
+
+    def text_embedding(self, key: str, text: str) -> np.ndarray:
+        import torch
+        if key != "siglip2":
+            raise ValueError("Text search is available only for SigLIP2")
+        if text is None or not str(text).strip():
+            raise ValueError("Please enter a text query")
+        with self.lock:
+            self._load(key)
+            inputs = self.processor(
+                text=[str(text).strip()],
+                padding="max_length",
+                max_length=64,
+                truncation=True,
+                return_tensors="pt",
+            )
+            inputs = {k: v.to(self._device()) if hasattr(v, "to") else v for k, v in inputs.items()}
+            with torch.inference_mode():
+                if hasattr(self.model, "get_text_features"):
+                    output = self.model.get_text_features(**inputs)
+                else:
+                    output = self.model(**inputs)
+                if isinstance(output, torch.Tensor):
+                    features = output
+                elif getattr(output, "text_embeds", None) is not None:
+                    features = output.text_embeds
+                elif getattr(output, "pooler_output", None) is not None:
+                    features = output.pooler_output
+                elif isinstance(output, (tuple, list)):
+                    features = output[0]
+                else:
+                    raise RuntimeError("Unexpected SigLIP2 text feature format")
+            if features.ndim != 2 or features.shape[0] != 1:
+                raise RuntimeError(f"Unexpected text encoder output shape: {features.shape}")
+            vecs = features.detach().float().cpu().numpy().astype(np.float32)
+            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            if not np.isfinite(vecs).all() or (norms < 1e-12).any():
+                raise ValueError("Non-finite or empty text embeddings")
+            return np.ascontiguousarray(vecs / norms)[0]

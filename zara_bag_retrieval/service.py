@@ -35,6 +35,13 @@ class VisualSearchService:
         embedding = self.encoders.image_embedding(model, image)
         return top_products(artifacts.index, artifacts.gallery, embedding, k=k)
 
+    def search_text_query(self, text: str, k: int = 3) -> list[ProductHit]:
+        if "siglip2" not in self.available:
+            raise FileNotFoundError("SigLIP2 artifacts are not available")
+        artifacts = self.store.load("siglip2")
+        embedding = self.encoders.text_embedding("siglip2", text)
+        return top_products(artifacts.index, artifacts.gallery, embedding, k=k)
+
     def get_query_image_path(self, key: str) -> str:
         if key not in self.query_by_key:
             raise KeyError(key)

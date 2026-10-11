@@ -47,6 +47,14 @@ def build_demo(service: VisualSearchService):
         except Exception as exc:
             raise gr.Error(f"Search failed: {exc}") from exc
 
+    def run_text(prompt):
+        if prompt is None or not str(prompt).strip():
+            raise gr.Error("Please enter a text prompt.")
+        try:
+            return to_outputs(service.search_text_query(prompt))
+        except Exception as exc:
+            raise gr.Error(f"Search failed: {exc}") from exc
+
     def preview_query(key):
         return service.get_query_image_path(key) if key else None
 
@@ -82,10 +90,17 @@ def build_demo(service: VisualSearchService):
             with gr.Tab("Upload your own image"):
                 uploaded = gr.Image(type="pil", label="Upload a handbag image", height=290)
                 search_upload = gr.Button("Search uploaded image", variant="primary")
+            with gr.Tab("Search by text"):
+                text_query = gr.Textbox(
+                    label="Describe the bag you want to find",
+                    placeholder="Example: black leather shoulder bag with chain strap"
+                )
+                gr.Markdown("Text search uses SigLIP2.")
+                search_text = gr.Button("Search by text", variant="primary")
         gr.Markdown("### Top 3 products")
         visual_results = gr.Gallery(
             label="Matching products", columns=3, object_fit="contain",
-             show_label=True,
+            height=300, show_label=True,
         )
         status = gr.Markdown("Select a query or upload an image.")
         result_table = gr.Dataframe(
@@ -99,4 +114,7 @@ def build_demo(service: VisualSearchService):
         search_upload.click(run_upload, inputs=[uploaded, model],
                             outputs=[visual_results, result_table, status],
                             concurrency_limit=1, concurrency_id="model_inference")
+        search_text.click(run_text, inputs=[text_query],
+                          outputs=[visual_results, result_table, status],
+                          concurrency_limit=1, concurrency_id="model_inference")
     return demo

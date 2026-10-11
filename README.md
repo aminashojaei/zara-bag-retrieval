@@ -68,3 +68,11 @@ python -m pytest -q
 The `data/` directory is intended for the project images. Check redistribution rights for Zara photography before publishing it. GitHub rejects individual files larger than 100 MB; use Git LFS when appropriate.
 
 Generated indexes, embeddings and model weights are local runtime files and are excluded from Git. No search history or result files are saved by the web interface.
+
+
+## Features
+
+- Search by saved query image
+- Search by uploaded image
+- Search by text with SigLIP2
+- Return top 3 distinct products
